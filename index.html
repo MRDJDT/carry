@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}</style>
+<title>Carry Slider Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@500;700;800&display=swap">
+<style>
+/* Layout: one craft board (the maths) beside a "thinking" panel with ten-frames; coin tray underneath. Stacks on phones. */
+:root {
+  --bg: #e9eef4;
+  --board: #fbfcfd;
+  --board-edge: #cfd8e3;
+  --groove: #b9c3cf;
+  --groove-deep: #8e9aa8;
+  --tile: #f2875a;
+  --tile-edge: #c9623a;
+  --tile-empty: #f6d3c3;
+  --coin: #f8cc2f;
+  --coin-edge: #c99a0c;
+  --ink: #1d2740;
+  --muted: #5d6a80;
+  --place: #2a66d4;
+  --dot-b: #3d86e6;
+  --good: #2f9e5b;
+  --bad: #d2463a;
+  --panel: #ffffff;
+  --focus: #2a66d4;
+  --display: "Baloo 2", "Comic Sans MS", "Trebuchet MS", system-ui, sans-serif;
+  --body: "Nunito", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131926; --board: #222b3b; --board-edge: #334058; --groove: #121823; --groove-deep: #06090f;
+    --tile: #ec7f52; --tile-edge: #a9502c; --tile-empty: #4b3a36; --coin: #f5c526; --coin-edge: #a67d05;
+    --ink: #eef2f8; --muted: #a3afc3; --place: #7fb0ff; --dot-b: #69a6ff; --good: #54c681; --bad: #ff7466;
+    --panel: #1b2230; --focus: #7fb0ff; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131926; --board: #222b3b; --board-edge: #334058; --groove: #121823; --groove-deep: #06090f;
+  --tile: #ec7f52; --tile-edge: #a9502c; --tile-empty: #4b3a36; --coin: #f5c526; --coin-edge: #a67d05;
+  --ink: #eef2f8; --muted: #a3afc3; --place: #7fb0ff; --dot-b: #69a6ff; --good: #54c681; --bad: #ff7466;
+  --panel: #1b2230; --focus: #7fb0ff; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 40px; display: grid; gap: 18px; }
+header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(1.7rem, 4vw, 2.3rem); margin: 0; line-height: 1; text-wrap: balance; }
+h1 span { color: var(--place); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.seg { display: inline-flex; border: 2px solid var(--board-edge); border-radius: 999px; overflow: hidden; }
+.seg button { border: 0; background: transparent; color: var(--ink); font: 700 0.95rem var(--body); padding: 8px 14px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--place); color: var(--board); }
+.btn { border: 2px solid var(--ink); background: var(--ink); color: var(--bg); font: 800 1rem var(--body); padding: 9px 18px; border-radius: 999px; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--board-edge); }
+.btn:hover { filter: brightness(1.1); }
+button:focus-visible, input:focus-visible, .coin-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.stars { font: 800 1rem var(--body); color: var(--muted); font-variant-numeric: tabular-nums; }
+.stars b { color: var(--coin-edge); font-size: 1.2rem; }
+
+.main { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 760px) { .main { grid-template-columns: minmax(0, 1fr); } }
+
+.board { background: var(--board); border: 3px solid var(--board-edge); border-radius: 18px; padding: 8px; box-shadow: 0 6px 0 var(--board-edge); }
+.board svg { display: block; width: 100%; height: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
+svg text { font-family: var(--display); font-weight: 800; }
+.lbl { fill: var(--place); font-size: 44px; }
+.lbl.dim { opacity: .45; }
+.groove { fill: none; stroke: var(--groove); stroke-width: 62; stroke-linecap: round; stroke-linejoin: round; }
+.groove-in { fill: none; stroke: var(--groove-deep); stroke-width: 62; stroke-linecap: round; stroke-linejoin: round; opacity: .35; transform: translate(2px, 3px); }
+.groove-wrap.idle { opacity: .5; }
+.track-hint { fill: none; stroke: var(--coin); stroke-width: 4; stroke-dasharray: 2 14; stroke-linecap: round; opacity: .9; }
+.tile rect { fill: var(--tile); stroke: var(--tile-edge); stroke-width: 4; }
+.tile.empty rect { fill: var(--tile-empty); stroke: var(--tile-empty); }
+.tile text { fill: #2a1a12; font-size: 72px; }
+.col-hi { fill: var(--place); opacity: .08; }
+.rule { stroke: var(--place); stroke-width: 5; stroke-linecap: round; }
+.plus { fill: var(--place); font-size: 70px; }
+.slot { fill: var(--bg); stroke: var(--muted); stroke-width: 3; stroke-dasharray: 8 7; }
+.slot.active { stroke: var(--place); stroke-width: 5; animation: pulse 1.4s ease-in-out infinite; }
+.slot.over { fill: var(--coin); fill-opacity: .35; }
+.cspot { fill: var(--groove-deep); opacity: .25; }
+.coin circle.face { fill: url(#coinGrad); stroke: var(--coin-edge); stroke-width: 4; }
+.coin circle.ring { fill: none; stroke: var(--coin-edge); stroke-width: 2; opacity: .5; }
+.coin text { fill: #3b2a00; font-size: 38px; }
+.coin.big text { font-size: 44px; }
+.slider { cursor: grab; }
+.slider:active { cursor: grabbing; }
+.slider.wiggle { animation: wiggle 1.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.slider:focus { outline: none; }
+.slider:focus-visible circle.face { stroke: var(--focus); stroke-width: 6; }
+.shake { animation: shake .45s; transform-box: fill-box; transform-origin: center; }
+.pop { animation: pop .35s ease-out; transform-box: fill-box; transform-origin: center; }
+@keyframes pulse { 50% { stroke-opacity: .35; } }
+@keyframes wiggle { 0%,100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+@keyframes shake { 20% { transform: translateX(-10px); } 40% { transform: translateX(10px); } 60% { transform: translateX(-7px); } 80% { transform: translateX(6px); } }
+@keyframes pop { 0% { transform: scale(.4); } 70% { transform: scale(1.15); } 100% { transform: scale(1); } }
+
+.panel { background: var(--panel); border: 3px solid var(--board-edge); border-radius: 18px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.step { font: 800 .8rem var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--place); }
+.say { font-family: var(--display); font-weight: 800; font-size: 1.9rem; line-height: 1.1; margin: 0; font-variant-numeric: tabular-nums; }
+.say .c { color: var(--coin-edge); }
+.msg { margin: 0; font-size: 1.08rem; line-height: 1.45; min-height: 3em; }
+.msg.good { color: var(--good); font-weight: 800; }
+.msg.bad { color: var(--bad); font-weight: 800; }
+.frames { display: flex; flex-wrap: wrap; gap: 12px; }
+.frame { display: grid; grid-template-columns: repeat(5, 30px); gap: 5px; padding: 7px; border: 3px solid var(--muted); border-radius: 10px; position: relative; }
+.frame.full { border-color: var(--good); }
+.frame.full::after { content: "1 ten"; position: absolute; top: -12px; right: 8px; background: var(--good); color: var(--panel); font: 800 .75rem var(--body); padding: 1px 8px; border-radius: 999px; }
+.cell { width: 30px; height: 30px; border-radius: 50%; border: 2px dashed var(--board-edge); }
+.cell.a { background: var(--tile); border: 0; }
+.cell.b { background: var(--dot-b); border: 0; }
+.cell.k { background: var(--coin); border: 2px solid var(--coin-edge); }
+.cell.x { opacity: .35; position: relative; }
+.cell.x::after { content: ""; position: absolute; inset: 12px -3px auto; height: 4px; background: var(--bad); transform: rotate(-40deg); border-radius: 2px; }
+.frame.full[data-tag]::after { content: attr(data-tag); }
+.tile text.old { font-size: 30px; fill: #2a1a12; opacity: .55; }
+.tile line.strike { stroke: var(--bad); stroke-width: 4; stroke-linecap: round; }
+.tile text.wide { font-size: 58px; }
+.coin.ten text { font-size: 28px; }
+.ops { display: flex; flex-wrap: wrap; gap: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .88rem; color: var(--muted); }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+
+.tray { background: var(--panel); border: 3px solid var(--board-edge); border-radius: 18px; padding: 14px 16px; display: grid; gap: 10px; }
+.tray p { margin: 0; color: var(--muted); font-weight: 700; }
+.coins { display: flex; flex-wrap: wrap; gap: 10px; }
+.coin-btn { width: 58px; height: 58px; border-radius: 50%; border: 4px solid var(--coin-edge); background: radial-gradient(circle at 35% 30%, #fff6c4 0%, var(--coin) 45%, var(--coin) 100%); color: #3b2a00; font: 800 1.8rem var(--display); cursor: grab; touch-action: none; box-shadow: 0 4px 0 var(--coin-edge); display: grid; place-items: center; padding: 0; }
+.coin-btn:active { cursor: grabbing; transform: translateY(2px); box-shadow: 0 2px 0 var(--coin-edge); }
+.coin-btn.hint { animation: wiggle 1s ease-in-out infinite; }
+.tray.locked .coin-btn { opacity: .35; cursor: not-allowed; }
+.ghost { position: fixed; left: 0; top: 0; pointer-events: none; z-index: 20; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; border: 4px solid var(--coin-edge); background: radial-gradient(circle at 35% 30%, #fff6c4 0%, var(--coin) 45%); display: grid; place-items: center; font: 800 2rem var(--display); color: #3b2a00; box-shadow: 0 10px 18px rgba(0,0,0,.25); }
+
+.own { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.own label { font-weight: 800; color: var(--muted); }
+.own input { width: 5.2em; font: 800 1.2rem var(--display); padding: 6px 10px; border-radius: 10px; border: 2px solid var(--board-edge); background: var(--board); color: var(--ink); text-align: center; }
+.own .err { color: var(--bad); font-weight: 700; flex-basis: 100%; margin: 0; min-height: 1.2em; }
+details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
+
+.done-card { display: none; }
+.done .done-card { display: block; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Carry <span>Slider</span></h1>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Sum type">
+        <button id="opAdd" aria-pressed="true">+ Carry</button>
+        <button id="opSub" aria-pressed="false">− Borrow</button>
+      </div>
+      <div class="seg" role="group" aria-label="Number size">
+        <button id="n2" aria-pressed="true">Tens &amp; ones</button>
+        <button id="n3" aria-pressed="false">Hundreds too</button>
+      </div>
+      <button class="btn" id="newBtn">New sum</button>
+      <span class="stars" aria-live="polite"><b>★</b> <span id="stars">0</span></span>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="board"><svg id="svg" aria-label="Addition board"></svg></div>
+    <aside class="panel" id="panel">
+      <div class="step" id="step">Step 1</div>
+      <p class="say" id="say"></p>
+      <p class="msg" id="msg" aria-live="polite"></p>
+      <div class="frames" id="frames" aria-hidden="true"></div>
+      <div class="legend" id="legend"></div>
+      <button class="btn done-card" id="nextBtn">Next sum →</button>
+    </aside>
+  </div>
+
+  <section class="tray" id="tray">
+    <p>Drag a coin into the glowing circle, or tap a coin.</p>
+    <div class="coins" id="coins"></div>
+  </section>
+
+  <details>
+    <summary>Make my own sum</summary>
+    <form class="own" id="ownForm" style="margin-top:10px">
+      <label for="ownA">Top</label><input id="ownA" inputmode="numeric" maxlength="3" value="49">
+      <label for="ownB" id="ownOp">+</label><input id="ownB" inputmode="numeric" maxlength="3" value="32">
+      <button class="btn ghost" type="submit">Use these</button>
+      <p class="err" id="ownErr"></p>
+    </form>
+  </details>
+</div>
+
+<script>
+(() => {
+  const PLACES = ['ones', 'tens', 'hundreds'];
+  const ONE = { ones: 'one', tens: 'ten', hundreds: 'hundred' };
+  const LETTER = { ones: 'O', tens: 'T', hundreds: 'H' };
+  const CW = 180, LM = 60, Y = { lbl: 48, carry: 95, top: 188, bot: 304, rule: 374, ans: 432 };
+  const svg = document.getElementById('svg');
+  const NS = 'http://www.w3.org/2000/svg';
+  const $ = id => document.getElementById(id);
+  let st, stars = 0, nMode = 2, opMode = 'add';
+
+  const cx = i => LM + CW / 2 + CW * i;
+  const place = i => PLACES[st.n - 1 - i];
+  const SYM = { add: '+', sub: '−' };
+  const digit = (arr, i) => arr[i] == null ? 0 : arr[i];
+  const colSum = i => digit(st.A, i) + digit(st.B, i) + st.carry[i];
+  // column i's answer digit
+  const want = i => st.op === 'add' ? colSum(i) % 10 : st.cur[i] - digit(st.B, i);
+  // addition: the ten travels up from the answer row into the next column left.
+  // subtraction: a ten travels down from the column left into the top of this column.
+  function groovePts(j) {
+    const bx = cx(j + 1) - CW / 2;
+    return st.op === 'add'
+      ? [[bx, Y.ans], [bx, Y.carry], [cx(j), Y.carry]]
+      : [[cx(j), Y.carry], [bx, Y.carry], [bx, Y.top]];
+  }
+
+  function rnd(lo, hi) { return lo + Math.floor(Math.random() * (hi - lo + 1)); }
+  const dig = (x, p) => Math.floor(x / 10 ** p) % 10;
+  // how many columns carry (add) or borrow (sub); null if the sum doesn't fit the board
+  function check(a, b, n, op) {
+    if (op === 'add') {
+      if (a + b >= 10 ** n) return null;
+      let c = 0, k = 0;
+      for (let p = 0; p < n; p++) { const s = dig(a, p) + dig(b, p) + c; c = s >= 10 ? 1 : 0; k += c; }
+      return k;
+    }
+    if (a < b || a >= 10 ** n) return null;
+    let br = 0, k = 0;
+    for (let p = 0; p < n; p++) { const t = dig(a, p) - br; br = t < dig(b, p) ? 1 : 0; k += br; }
+    return k;
+  }
+  function makeProblem(n, op) {
+    for (let tries = 0; tries < 1000; tries++) {
+      let a, b;
+      if (op === 'add') { a = rnd(10 ** (n - 1), 10 ** n - 1); b = rnd(10 ** (n - 1), 10 ** n - 1); }
+      else { a = rnd(10 ** (n - 1) + 10, 10 ** n - 1); b = rnd(10 ** (n - 1), a - 1); }
+      if (check(a, b, n, op) >= 1) return fromNums(a, b, n, op);
+    }
+    return op === 'add' ? fromNums(49, 32, 2, op) : fromNums(42, 17, 2, op);
+  }
+  function toDigits(x, n) {
+    const s = String(x), out = [];
+    for (let i = 0; i < n; i++) { const k = i - (n - s.length); out.push(k >= 0 ? +s[k] : null); }
+    return out;
+  }
+  function fromNums(a, b, n, op) {
+    const A = toDigits(a, n);
+    return { op, n, a, b, A, B: toDigits(b, n), cur: A.map(d => d ?? 0), borrowed: Array(n).fill(false),
+      carry: Array(n).fill(0), ans: Array(n).fill(null),
+      col: n - 1, phase: 'answer', tries: 0, slideT: 0, slideJ: -1, done: false, fresh: -1 };
+  }
+
+  function el(tag, attrs = {}, parent) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function coin(parent, x, y, d, cls = '') {
+    const g = el('g', { class: 'coin ' + cls, transform: `translate(${x} ${y})` }, parent);
+    el('circle', { class: 'face', r: 27 }, g);
+    el('circle', { class: 'ring', r: 19 }, g);
+    const t = el('text', { 'text-anchor': 'middle', y: String(d).length > 1 ? 10 : 13 }, g); t.textContent = d;
+    return g;
+  }
+  const pathD = pts => 'M' + pts.map(p => p.join(' ')).join(' L');
+  const plen = pts => { let L = 0; for (let k = 1; k < pts.length; k++) L += Math.hypot(pts[k][0] - pts[k-1][0], pts[k][1] - pts[k-1][1]); return L; };
+  function pointAt(pts, t) {
+    for (let k = 1; k < pts.length; k++) {
+      const [x0, y0] = pts[k-1], [x1, y1] = pts[k], L = Math.hypot(x1 - x0, y1 - y0);
+      if (t <= L || k === pts.length - 1) { const f = Math.max(0, Math.min(1, t / L)); return [x0 + (x1 - x0) * f, y0 + (y1 - y0) * f]; }
+      t -= L;
+    }
+  }
+  function project(pts, x, y) {
+    let best = Infinity, bestT = 0, acc = 0;
+    for (let k = 1; k < pts.length; k++) {
+      const [x0, y0] = pts[k-1], [x1, y1] = pts[k], dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy);
+      const f = Math.max(0, Math.min(1, ((x - x0) * dx + (y - y0) * dy) / (L * L)));
+      const px = x0 + dx * f, py = y0 + dy * f, d = Math.hypot(x - px, y - py);
+      if (d < best) { best = d; bestT = acc + f * L; }
+      acc += L;
+    }
+    return bestT;
+  }
+
+  function render() {
+    const n = st.n, W = LM + CW * n + 24, H = 490, sub = st.op === 'sub';
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.innerHTML = '';
+    const defs = el('defs', {}, svg);
+    const rg = el('radialGradient', { id: 'coinGrad', cx: '35%', cy: '30%', r: '75%' }, defs);
+    el('stop', { offset: '0%', style: 'stop-color:#fff6c4' }, rg);
+    el('stop', { offset: '45%', style: 'stop-color:var(--coin)' }, rg);
+    el('stop', { offset: '100%', style: 'stop-color:var(--coin)' }, rg);
+
+    if (!st.done) el('rect', { class: 'col-hi', x: cx(st.col) - CW / 2 + 8, y: 10, width: CW - 16, height: H - 20, rx: 18 }, svg);
+
+    // grooves cut into the board, one between each pair of columns
+    for (let j = 0; j < n - 1; j++) {
+      const active = (st.phase === 'slide' || st.phase === 'drop') && st.slideJ === j;
+      const used = sub ? st.borrowed[j + 1] : st.carry[j];
+      const g = el('g', { class: 'groove-wrap' + (active || used ? '' : ' idle') }, svg);
+      const d = pathD(groovePts(j));
+      el('path', { class: 'groove', d }, g);
+      el('path', { class: 'groove-in', d }, g);
+      if (active) el('path', { class: 'track-hint', d }, g);
+    }
+
+    el('line', { class: 'rule', x1: 22, y1: Y.rule, x2: W - 18, y2: Y.rule }, svg);
+    const sign = el('text', { class: 'plus', x: 30, y: Y.bot + 24, 'text-anchor': 'middle' }, svg); sign.textContent = SYM[st.op];
+
+    for (let i = 0; i < n; i++) {
+      const x = cx(i), p = place(i);
+      const lb = el('text', { class: 'lbl' + (i === st.col || st.done ? '' : ' dim'), x, y: Y.lbl, 'text-anchor': 'middle' }, svg);
+      lb.textContent = LETTER[p];
+      [[st.A[i], Y.top, true], [st.B[i], Y.bot, false]].forEach(([d, y, isTop]) => {
+        const g = el('g', { class: 'tile' + (d == null ? ' empty' : '') + (isTop && st.fresh === 't' + i ? ' pop' : '') }, svg);
+        el('rect', { x: x - 48, y: y - 48, width: 96, height: 96, rx: 10 }, g);
+        if (d == null) return;
+        const show = sub && isTop ? st.cur[i] : d;
+        const t = el('text', { x, y: y + (show > 9 ? 21 : 25), 'text-anchor': 'middle', class: show > 9 ? 'wide' : '' }, g); t.textContent = show;
+        if (sub && isTop && show !== d) { // the old digit, crossed out, in the corner
+          const o = el('text', { class: 'old', x: x - 30, y: y - 20, 'text-anchor': 'middle' }, g); o.textContent = d;
+          el('line', { class: 'strike', x1: x - 44, y1: y - 18, x2: x - 16, y2: y - 38 }, g);
+        }
+      });
+      if (st.carry[i]) coin(svg, x, Y.carry, '1', st.fresh === i ? 'pop' : '');
+      el('circle', { class: 'slot' + (i === st.col && st.phase === 'answer' && !st.done ? ' active' : ''), cx: x, cy: Y.ans, r: 40, 'data-slot': i }, svg);
+      if (st.ans[i] != null) coin(svg, x, Y.ans, st.ans[i], 'big' + (st.fresh === 'a' + i ? ' pop' : ''));
+    }
+
+    if (st.phase === 'drop') { // empty spot next to the ones where the carried ten waits
+      const [x, y] = groovePts(st.slideJ)[0];
+      el('circle', { class: 'slot active', cx: x, cy: y, r: 34 }, svg);
+    }
+    if (st.phase === 'slide') {
+      const pts = groovePts(st.slideJ), [x, y] = pointAt(pts, st.slideT);
+      const target = sub ? place(st.slideJ + 1) : place(st.slideJ);
+      const g = coin(svg, x, y, sub ? '10' : '1', 'slider' + (sub ? ' ten' + (st.slideT < 1 ? ' wiggle' : '') : '') + (st.fresh === 'c' ? ' pop' : ''));
+      g.setAttribute('tabindex', '0');
+      g.setAttribute('role', 'slider');
+      g.setAttribute('aria-label', (sub ? 'Borrowed ten. Slide it to the ' : 'Carried ten. Slide it to the ') + target + ' column. Use arrow keys.');
+      g.setAttribute('aria-valuemin', 0); g.setAttribute('aria-valuemax', 100);
+      g.setAttribute('aria-valuenow', Math.round(100 * st.slideT / plen(pts)));
+      g.addEventListener('pointerdown', startSlide);
+      g.addEventListener('keydown', keySlide);
+    }
+    st.fresh = -1;
+    renderPanel();
+  }
+
+  function terms(i) {
+    if (st.op === 'sub') {
+      const top = st.borrowed[i] ? `<span class="c">${st.cur[i]}</span>` : st.cur[i];
+      return [top, digit(st.B, i)];
+    }
+    const t = [];
+    if (st.carry[i]) t.push('<span class="c">1</span>');
+    if (st.A[i] != null) t.push(st.A[i]);
+    if (st.B[i] != null) t.push(st.B[i]);
+    return t;
+  }
+  const strip = i => terms(i).map(x => String(x).replace(/<[^>]+>/g, '')).join(` ${SYM[st.op]} `);
+
+  function renderPanel() {
+    const panel = $('panel'), tray = $('tray'), sub = st.op === 'sub';
+    panel.classList.toggle('done', st.done);
+    tray.classList.toggle('locked', !(st.phase === 'answer' || st.phase === 'drop') || st.done);
+    document.querySelectorAll('.coin-btn').forEach(b => b.classList.remove('hint'));
+    const frames = $('frames'); frames.innerHTML = '';
+    $('legend').innerHTML = '';
+    if (st.done) {
+      $('step').textContent = 'All done';
+      $('say').innerHTML = `${st.a} ${SYM[st.op]} ${st.b} = ${sub ? st.a - st.b : st.a + st.b}`;
+      return;
+    }
+    const i = st.col, p = place(i);
+    $('step').textContent = (sub ? 'Take away the ' : 'Add the ') + p;
+    const known = st.op === 'add' ? (st.phase !== 'answer' || st.ans[i] != null) : st.ans[i] != null;
+    $('say').innerHTML = terms(i).join(` ${SYM[st.op]} `) + (known ? ` = ${st.op === 'add' ? colSum(i) : want(i)}` : ' = ?');
+
+    // ten-frames. add: carried ten, top, bottom. sub: borrowed ten + top, with the bottom amount crossed out
+    const dots = [];
+    let tag = null;
+    if (sub) {
+      const own = st.borrowed[i] ? st.cur[i] - 10 : st.cur[i];
+      if (st.borrowed[i]) { for (let k = 0; k < 10; k++) dots.push('k'); tag = 'borrowed ten'; }
+      for (let k = 0; k < own; k++) dots.push('a');
+      if (st.phase === 'answer') for (let k = 0; k < digit(st.B, i) && k < dots.length; k++) dots[dots.length - 1 - k] += ' x';
+    } else {
+      if (st.carry[i]) dots.push('k');
+      for (let k = 0; k < digit(st.A, i); k++) dots.push('a');
+      for (let k = 0; k < digit(st.B, i); k++) dots.push('b');
+      if (st.phase !== 'answer' || st.tries >= 1) tag = '1 ten';
+    }
+    const nf = Math.max(1, Math.ceil(dots.length / 10));
+    for (let f = 0; f < nf; f++) {
+      const fr = document.createElement('div'); fr.className = 'frame';
+      let filled = 0;
+      for (let c = 0; c < 10; c++) {
+        const d = dots[f * 10 + c], cell = document.createElement('div');
+        cell.className = 'cell' + (d ? ' ' + d : ''); if (d) filled++;
+        fr.appendChild(cell);
+      }
+      if (f === 0 && filled === 10 && tag) { fr.classList.add('full'); fr.dataset.tag = tag; }
+      frames.appendChild(fr);
+    }
+    const lg = [];
+    if (sub) {
+      if (st.borrowed[i]) lg.push('<span><i style="background:var(--coin)"></i>borrowed ten</span>');
+      lg.push('<span><i style="background:var(--tile)"></i>top number</span>');
+      if (digit(st.B, i) && st.phase === 'answer') lg.push('<span><i style="background:var(--bad)"></i>crossed out = taken away</span>');
+    } else {
+      if (st.carry[i]) lg.push('<span><i style="background:var(--coin)"></i>carried</span>');
+      if (st.A[i]) lg.push('<span><i style="background:var(--tile)"></i>top</span>');
+      if (st.B[i]) lg.push('<span><i style="background:var(--dot-b)"></i>bottom</span>');
+    }
+    $('legend').innerHTML = lg.join('');
+  }
+
+  function say(text, kind = '') { const m = $('msg'); m.textContent = text; m.className = 'msg ' + kind; }
+
+  // subtraction: does this column need to borrow? If so, start the slide from the nearest column that can lend.
+  function needBorrow() {
+    const i = st.col;
+    if (st.op !== 'sub' || st.cur[i] >= digit(st.B, i)) { st.phase = 'answer'; return null; }
+    let k = i - 1;
+    while (st.cur[k] === 0) k--;
+    st.phase = 'slide'; st.slideJ = k; st.slideT = 0; st.tries = 0;
+    return k;
+  }
+  function borrowMsg(k) {
+    const i = st.col, p = place(i), lender = place(k), next = place(k + 1);
+    if (k + 1 === i) return `${st.cur[i]} ${SYM.sub} ${digit(st.B, i)}? There aren't enough ${p}! Borrow 1 ${ONE[lender]} from the ${lender}: slide it down into the ${p}.`;
+    return `Not enough ${p}, and the ${place(i - 1)} are empty. Borrow from the ${lender} first: slide 1 ${ONE[lender]} into the ${next}.`;
+  }
+  function prompt() {
+    const k = needBorrow();
+    render();
+    if (k != null) return say(borrowMsg(k));
+    const p = place(st.col);
+    say(st.op === 'sub'
+      ? `Take away the ${p}. Put the answer coin in the ${p} circle.`
+      : `Count the ${p}. Put the answer coin in the ${p} circle.`);
+  }
+
+  function newGame(p) {
+    st = p || makeProblem(nMode, opMode);
+    prompt();
+  }
+
+  // ----- dropping an answer coin -----
+  function placeAnswer(d) {
+    if (st.phase === 'drop') return placeCarry(d);
+    if (st.phase !== 'answer' || st.done) return;
+    const i = st.col, p = place(i), w = want(i), sub = st.op === 'sub', s = colSum(i);
+    if (d !== w) {
+      st.tries++;
+      render();
+      const bad = coin(svg, cx(i), Y.ans, d, 'big shake');
+      setTimeout(() => bad.remove(), 460);
+      if (sub) say(st.tries >= 2 ? `${strip(i)} = ${w}. Try the ${w} coin.` : 'Not quite. Count the dots that are left.', 'bad');
+      else if (s >= 10) say(st.tries >= 2
+          ? `${strip(i)} = ${s}. That's 1 ten and ${w} ${p}. Put the ${w} here.`
+          : `Not quite. Count the dots. Is it more than 9? Only the ${p} stay here.`, 'bad');
+      else say(st.tries >= 2 ? `${strip(i)} = ${s}. Try the ${s} coin.` : 'Not quite. Count the dots again.', 'bad');
+      if (st.tries >= 2) document.querySelector(`.coin-btn[data-d="${w}"]`)?.classList.add('hint');
+      return;
+    }
+    st.ans[i] = d; st.tries = 0; st.fresh = 'a' + i;
+    if (!sub && s >= 10 && i > 0) {
+      st.phase = 'drop'; st.slideJ = i - 1; st.slideT = 0;
+      render();
+      say(`${s} ${p} = 1 ${ONE[place(i - 1)]} and ${w} ${p}. Now drag the ${ONE[place(i - 1)]} coin into the glowing spot next to the ${p}.`, 'good');
+    } else if (i > 0) {
+      st.col--;
+      const k = needBorrow();
+      render();
+      if (k != null) say(`Yes, ${w} ${p}! ` + borrowMsg(k), 'good');
+      else say(`Yes! ${w} ${p}. ${sub ? 'No borrowing here.' : 'No carrying here.'} Now the ${place(st.col)}.`, 'good');
+    } else finish();
+  }
+
+  // addition: the child puts the carried ten into the groove; it waits there until they slide it
+  function placeCarry(d) {
+    const j = st.slideJ, i = j + 1, [x, y] = groovePts(j)[0];
+    if (d !== 1) {
+      st.tries++;
+      const bad = coin(svg, x, y, d, 'shake');
+      setTimeout(() => bad.remove(), 460);
+      say(`${colSum(i)} is 1 ${ONE[place(j)]} and ${colSum(i) % 10} ${place(i)}. How many ${place(j)} is that?`, 'bad');
+      if (st.tries >= 2) document.querySelector('.coin-btn[data-d="1"]')?.classList.add('hint');
+      return;
+    }
+    st.phase = 'slide'; st.slideT = 0; st.tries = 0; st.fresh = 'c';
+    render();
+    say(`The ${ONE[place(j)]} is waiting next to the ${place(i)}. When you're ready, slide it up the groove to the ${place(j)}.`, 'good');
+  }
+
+  function finish() {
+    st.done = true; stars++; $('stars').textContent = stars;
+    render();
+    say(`Brilliant! ${st.a} ${SYM[st.op]} ${st.b} = ${st.op === 'sub' ? st.a - st.b : st.a + st.b}.`, 'good');
+    $('nextBtn').focus({ preventScroll: true });
+  }
+
+  // ----- sliding a ten along the groove -----
+  function svgPoint(e) {
+    const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+  function startSlide(e) {
+    e.preventDefault();
+    const g = e.currentTarget; g.classList.remove('wiggle');
+    const pts = groovePts(st.slideJ), L = plen(pts);
+    g.setPointerCapture(e.pointerId);
+    const move = ev => {
+      const p = svgPoint(ev);
+      // only allow small jumps so the coin really travels along the groove
+      const t = project(pts, p.x, p.y);
+      st.slideT = Math.min(L, Math.max(0, Math.abs(t - st.slideT) > 140 ? st.slideT : t));
+      const [x, y] = pointAt(pts, st.slideT);
+      g.setAttribute('transform', `translate(${x} ${y})`);
+      if (st.slideT >= L - 6) end();
+    };
+    const end = () => {
+      g.removeEventListener('pointermove', move);
+      g.removeEventListener('pointerup', end);
+      g.removeEventListener('pointercancel', end);
+      if (st.slideT >= L - 30) land();
+      else if (st.phase === 'slide') say('Keep sliding! Push it all the way along the groove.');
+    };
+    g.addEventListener('pointermove', move);
+    g.addEventListener('pointerup', end);
+    g.addEventListener('pointercancel', end);
+  }
+  function keySlide(e) {
+    const pts = groovePts(st.slideJ), L = plen(pts);
+    const fwd = st.op === 'add' ? ['ArrowUp', 'ArrowLeft'] : ['ArrowDown', 'ArrowRight'];
+    const back = st.op === 'add' ? ['ArrowDown', 'ArrowRight'] : ['ArrowUp', 'ArrowLeft'];
+    if (fwd.includes(e.key) || back.includes(e.key) || e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      st.slideT = back.includes(e.key) ? Math.max(0, st.slideT - 40) : Math.min(L, st.slideT + (fwd.includes(e.key) ? 40 : L));
+      if (st.slideT >= L) return land();
+      render(); svg.querySelector('.slider')?.focus();
+    }
+  }
+  function land() {
+    if (st.phase !== 'slide') return;
+    const j = st.slideJ;
+    st.slideJ = -1; st.tries = 0;
+    if (st.op === 'add') {
+      st.carry[j] = 1; st.fresh = j; st.phase = 'answer'; st.col = j;
+      render();
+      return say(`The ten is in the ${place(j)} column. Now add the ${place(j)}, and don't forget the 1!`, 'good');
+    }
+    st.cur[j] -= 1; st.cur[j + 1] += 10; st.borrowed[j + 1] = true; st.fresh = 't' + (j + 1);
+    const lender = place(j), got = place(j + 1);
+    const k = needBorrow();
+    render();
+    if (k != null) say(`The ${got} now have ${st.cur[j + 1]}. ` + borrowMsg(k), 'good');
+    else say(`1 ${ONE[lender]} became 10 ${got}, so now there are ${st.cur[st.col]}. Work out ${strip(st.col)}.`, 'good');
+  }
+
+  // ----- coin tray: drag or tap -----
+  const coinsEl = $('coins');
+  for (let d = 0; d <= 9; d++) {
+    const b = document.createElement('button');
+    b.className = 'coin-btn'; b.textContent = d; b.dataset.d = d; b.type = 'button';
+    b.setAttribute('aria-label', 'Coin ' + d);
+    b.addEventListener('pointerdown', trayDown);
+    b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); placeAnswer(d); } });
+    coinsEl.appendChild(b);
+  }
+  function activeSlot() { return svg.querySelector('.slot.active'); }
+  function overSlot(x, y) {
+    const s = activeSlot(); if (!s) return false;
+    const r = s.getBoundingClientRect(), c = [r.left + r.width / 2, r.top + r.height / 2];
+    return Math.hypot(x - c[0], y - c[1]) < r.width * 0.85;
+  }
+  function trayDown(e) {
+    if (!(st.phase === 'answer' || st.phase === 'drop') || st.done) return;
+    e.preventDefault();
+    const b = e.currentTarget, d = +b.dataset.d, sx = e.clientX, sy = e.clientY;
+    b.setPointerCapture(e.pointerId);
+    let ghost = null;
+    const move = ev => {
+      if (!ghost && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 6) {
+        ghost = document.createElement('div'); ghost.className = 'ghost'; ghost.textContent = d; document.body.appendChild(ghost);
+      }
+      if (ghost) {
+        ghost.style.transform = `translate(${ev.clientX}px, ${ev.clientY}px)`;
+        activeSlot()?.classList.toggle('over', overSlot(ev.clientX, ev.clientY));
+      }
+    };
+    const up = ev => {
+      b.removeEventListener('pointermove', move); b.removeEventListener('pointerup', up); b.removeEventListener('pointercancel', up);
+      activeSlot()?.classList.remove('over');
+      if (!ghost) return placeAnswer(d); // a tap
+      ghost.remove();
+      if (ev.type === 'pointerup' && overSlot(ev.clientX, ev.clientY)) placeAnswer(d);
+    };
+    b.addEventListener('pointermove', move); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up);
+  }
+
+  // ----- controls -----
+  function syncControls() {
+    $('n2').setAttribute('aria-pressed', nMode === 2); $('n3').setAttribute('aria-pressed', nMode === 3);
+    $('opAdd').setAttribute('aria-pressed', opMode === 'add'); $('opSub').setAttribute('aria-pressed', opMode === 'sub');
+    $('ownOp').textContent = SYM[opMode];
+  }
+  function setMode(n, op) { nMode = n; opMode = op; syncControls(); newGame(); }
+  $('n2').onclick = () => setMode(2, opMode);
+  $('n3').onclick = () => setMode(3, opMode);
+  $('opAdd').onclick = () => { if (opMode !== 'add') { $('ownA').value = 49; $('ownB').value = 32; } setMode(nMode, 'add'); };
+  $('opSub').onclick = () => { if (opMode !== 'sub') { $('ownA').value = 42; $('ownB').value = 17; } setMode(nMode, 'sub'); };
+  $('newBtn').onclick = () => newGame();
+  $('nextBtn').onclick = () => newGame();
+  $('ownForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const a = $('ownA').value.trim(), b = $('ownB').value.trim(), err = $('ownErr');
+    if (!/^\d{1,3}$/.test(a) || !/^\d{1,3}$/.test(b)) { err.textContent = 'Type whole numbers up to 999.'; return; }
+    const A = +a, B = +b, n = Math.max(2, String(A).length, String(B).length);
+    if (check(A, B, n, opMode) == null) {
+      err.textContent = opMode === 'sub'
+        ? 'For take away, the top number needs to be the bigger one.'
+        : `The answer needs a new column. Pick numbers that add up to less than ${10 ** n}.`;
+      return;
+    }
+    err.textContent = '';
+    nMode = n; syncControls();
+    newGame(fromNums(A, B, n, opMode));
+  });
+
+  newGame(fromNums(49, 32, 2, 'add')); // same example as the video
+})();
+</script>
+</body>
+</html>
