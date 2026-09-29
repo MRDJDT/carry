@@ -88,7 +88,7 @@ svg text { font-family: var(--display); font-weight: 800; }
 .coin.big text { font-size: 44px; }
 .slider { cursor: grab; }
 .slider:active { cursor: grabbing; }
-.slider.wiggle { animation: wiggle 1.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.coin .wiggle { animation: wiggle 1.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 .slider:focus { outline: none; }
 .slider:focus-visible circle.face { stroke: var(--focus); stroke-width: 6; }
 .shake { animation: shake .45s; transform-box: fill-box; transform-origin: center; }
@@ -274,13 +274,17 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
     if (parent) parent.appendChild(e);
     return e;
   }
+  // the outer group holds the position; animations go on an inner group so they don't wipe out the translate
   function coin(parent, x, y, d, cls = '') {
-    const g = el('g', { class: 'coin ' + cls, transform: `translate(${x} ${y})` }, parent);
-    el('circle', { class: 'face', r: 27 }, g);
-    el('circle', { class: 'ring', r: 19 }, g);
-    const t = el('text', { 'text-anchor': 'middle', y: String(d).length > 1 ? 10 : 13 }, g); t.textContent = d;
+    const ANIM = ['pop', 'shake', 'wiggle'], all = cls.split(' ').filter(Boolean);
+    const g = el('g', { class: 'coin ' + all.filter(c => !ANIM.includes(c)).join(' '), transform: `translate(${x} ${y})` }, parent);
+    const inner = el('g', { class: all.filter(c => ANIM.includes(c)).join(' ') }, g);
+    el('circle', { class: 'face', r: 27 }, inner);
+    el('circle', { class: 'ring', r: 19 }, inner);
+    const t = el('text', { 'text-anchor': 'middle', y: String(d).length > 1 ? 10 : 13 }, inner); t.textContent = d;
     return g;
   }
+  const cnt = (k, p) => `${k} ${k === 1 ? ONE[p] : p}`;
   const pathD = pts => 'M' + pts.map(p => p.join(' ')).join(' L');
   const plen = pts => { let L = 0; for (let k = 1; k < pts.length; k++) L += Math.hypot(pts[k][0] - pts[k-1][0], pts[k][1] - pts[k-1][1]); return L; };
   function pointAt(pts, t) {
@@ -489,7 +493,7 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
       setTimeout(() => bad.remove(), 460);
       if (sub) say(st.tries >= 2 ? `${strip(i)} = ${w}. Try the ${w} coin.` : 'Not quite. Count the dots that are left.', 'bad');
       else if (s >= 10) say(st.tries >= 2
-          ? `${strip(i)} = ${s}. That's 1 ten and ${w} ${p}. Put the ${w} here.`
+          ? `${strip(i)} = ${s}. That's 1 ${ONE[place(i - 1)]} and ${cnt(w, p)}. Put the ${w} here.`
           : `Not quite. Count the dots. Is it more than 9? Only the ${p} stay here.`, 'bad');
       else say(st.tries >= 2 ? `${strip(i)} = ${s}. Try the ${s} coin.` : 'Not quite. Count the dots again.', 'bad');
       if (st.tries >= 2) document.querySelector(`.coin-btn[data-d="${w}"]`)?.classList.add('hint');
@@ -499,13 +503,13 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
     if (needTen(i)) {
       if (st.tenIn) return readyToSlide();
       render();
-      say(`Yes, ${w} ${p}! Now drag the 1 ${ONE[place(i - 1)]} into the glowing spot next to the ${p}.`, 'good');
+      say(`Yes, ${cnt(w, p)}! Now drag the 1 ${ONE[place(i - 1)]} into the glowing spot next to the ${p}.`, 'good');
     } else if (i > 0) {
       st.col--;
       const k = needBorrow();
       render();
-      if (k != null) say(`Yes, ${w} ${p}! ` + borrowMsg(k), 'good');
-      else say(`Yes! ${w} ${p}. ${sub ? 'No borrowing here.' : 'No carrying here.'} ` + (sub ? `Now the ${place(st.col)}.` : addHint(st.col)), 'good');
+      if (k != null) say(`Yes, ${cnt(w, p)}! ` + borrowMsg(k), 'good');
+      else say(`Yes! ${cnt(w, p)}. ${sub ? 'No borrowing here.' : 'No carrying here.'} ` + (sub ? `Now the ${place(st.col)}.` : addHint(st.col)), 'good');
     } else finish();
   }
 
@@ -518,7 +522,7 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
       const bad = coin(svg, x, y, d, 'shake');
       setTimeout(() => bad.remove(), 460);
       say(st.tries >= 2
-        ? `${strip(i)} = ${colSum(i)}. That's 1 ${ONE[place(j)]} and ${want(i)} ${place(i)}. Put the 1 here.`
+        ? `${strip(i)} = ${colSum(i)}. That's 1 ${ONE[place(j)]} and ${cnt(want(i), place(i))}. Put the 1 here.`
         : `Not quite. This spot is for the ${place(j)}. How many full ten-frames are there?`, 'bad');
       if (st.tries >= 2) document.querySelector('.coin-btn[data-d="1"]')?.classList.add('hint');
       return;
@@ -532,7 +536,7 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
     const i = st.col, j = i - 1;
     st.phase = 'slide'; st.slideJ = j; st.slideT = 0; st.tenIn = false;
     render();
-    say(`${colSum(i)} ${place(i)} = 1 ${ONE[place(j)]} and ${want(i)} ${place(i)}. When you're ready, slide the 1 up the groove to the ${place(j)}.`, 'good');
+    say(`${colSum(i)} ${place(i)} = 1 ${ONE[place(j)]} and ${cnt(want(i), place(i))}. When you're ready, slide the 1 up the groove to the ${place(j)}.`, 'good');
   }
 
   function finish() {
@@ -549,7 +553,7 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
   }
   function startSlide(e) {
     e.preventDefault();
-    const g = e.currentTarget; g.classList.remove('wiggle');
+    const g = e.currentTarget; g.querySelector('.wiggle')?.classList.remove('wiggle');
     const pts = groovePts(st.slideJ), L = plen(pts);
     g.setPointerCapture(e.pointerId);
     const move = ev => {
