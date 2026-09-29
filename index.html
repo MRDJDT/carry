@@ -566,9 +566,8 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
     g.setPointerCapture(e.pointerId);
     const move = ev => {
       const p = svgPoint(ev);
-      // only allow small jumps so the coin really travels along the groove
-      const t = project(pts, p.x, p.y);
-      st.slideT = Math.min(L, Math.max(0, Math.abs(t - st.slideT) > 140 ? st.slideT : t));
+      // the coin follows the finger but can only ever sit on the groove
+      st.slideT = Math.min(L, Math.max(0, project(pts, p.x, p.y)));
       const [x, y] = pointAt(pts, st.slideT);
       g.setAttribute('transform', `translate(${x} ${y})`);
       if (st.slideT >= L - 6) end();
