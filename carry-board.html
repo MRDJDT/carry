@@ -41,7 +41,12 @@
 }
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; }
-.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 40px; display: grid; gap: 18px; }
+html, body { height: 100%; }
+body { overscroll-behavior: none; -webkit-text-size-adjust: 100%; }
+button { touch-action: manipulation; }
+/* one screen: header, then board + panel filling the middle, then the coin tray */
+.wrap { max-width: 1240px; height: 100%; margin: 0 auto; padding-inline: 16px; padding-block: 12px; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 12px; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+input { -webkit-user-select: text; user-select: text; }
 header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 h1 { font-family: var(--display); font-weight: 800; font-size: clamp(1.7rem, 4vw, 2.3rem); margin: 0; line-height: 1; text-wrap: balance; }
 h1 span { color: var(--place); }
@@ -56,11 +61,10 @@ button:focus-visible, input:focus-visible, .coin-btn:focus-visible { outline: 3p
 .stars { font: 800 1rem var(--body); color: var(--muted); font-variant-numeric: tabular-nums; }
 .stars b { color: var(--coin-edge); font-size: 1.2rem; }
 
-.main { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 18px; align-items: start; }
-@media (max-width: 760px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.main { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(250px, 1fr); gap: 14px; min-height: 0; }
 
-.board { background: var(--board); border: 3px solid var(--board-edge); border-radius: 18px; padding: 8px; box-shadow: 0 6px 0 var(--board-edge); }
-.board svg { display: block; width: 100%; height: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
+.board { background: var(--board); border: 3px solid var(--board-edge); border-radius: 18px; padding: 8px; box-shadow: 0 6px 0 var(--board-edge); min-height: 0; display: flex; }
+.board svg { display: block; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; }
 svg text { font-family: var(--display); font-weight: 800; }
 .lbl { fill: var(--place); font-size: 44px; }
 .lbl.dim { opacity: .45; }
@@ -94,7 +98,7 @@ svg text { font-family: var(--display); font-weight: 800; }
 @keyframes shake { 20% { transform: translateX(-10px); } 40% { transform: translateX(10px); } 60% { transform: translateX(-7px); } 80% { transform: translateX(6px); } }
 @keyframes pop { 0% { transform: scale(.4); } 70% { transform: scale(1.15); } 100% { transform: scale(1); } }
 
-.panel { background: var(--panel); border: 3px solid var(--board-edge); border-radius: 18px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.panel { background: var(--panel); border: 3px solid var(--board-edge); border-radius: 18px; padding: 16px; display: grid; gap: 12px; align-content: start; min-width: 0; min-height: 0; overflow-y: auto; }
 .step { font: 800 .8rem var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--place); }
 .say { font-family: var(--display); font-weight: 800; font-size: 1.9rem; line-height: 1.1; margin: 0; font-variant-numeric: tabular-nums; }
 .say .c { color: var(--coin-edge); }
@@ -120,10 +124,10 @@ svg text { font-family: var(--display); font-weight: 800; }
 .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .88rem; color: var(--muted); }
 .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
 
-.tray { background: var(--panel); border: 3px solid var(--board-edge); border-radius: 18px; padding: 14px 16px; display: grid; gap: 10px; }
-.tray p { margin: 0; color: var(--muted); font-weight: 700; }
-.coins { display: flex; flex-wrap: wrap; gap: 10px; }
-.coin-btn { width: 58px; height: 58px; border-radius: 50%; border: 4px solid var(--coin-edge); background: radial-gradient(circle at 35% 30%, #fff6c4 0%, var(--coin) 45%, var(--coin) 100%); color: #3b2a00; font: 800 1.8rem var(--display); cursor: grab; touch-action: none; box-shadow: 0 4px 0 var(--coin-edge); display: grid; place-items: center; padding: 0; }
+.tray { background: var(--panel); border: 3px solid var(--board-edge); border-radius: 18px; padding: 10px 14px 14px; display: grid; gap: 8px; }
+.tray p { margin: 0; color: var(--muted); font-weight: 700; font-size: .95rem; }
+.coins { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 10px; max-width: 800px; }
+.coin-btn { width: 100%; max-width: 70px; aspect-ratio: 1; justify-self: center; font-size: clamp(1.4rem, 3.2vw, 2.1rem) !important; border-radius: 50%; border: 4px solid var(--coin-edge); background: radial-gradient(circle at 35% 30%, #fff6c4 0%, var(--coin) 45%, var(--coin) 100%); color: #3b2a00; font: 800 1.8rem var(--display); cursor: grab; touch-action: none; box-shadow: 0 4px 0 var(--coin-edge); display: grid; place-items: center; padding: 0; }
 .coin-btn:active { cursor: grabbing; transform: translateY(2px); box-shadow: 0 2px 0 var(--coin-edge); }
 .coin-btn.hint { animation: wiggle 1s ease-in-out infinite; }
 .tray.locked .coin-btn { opacity: .35; cursor: not-allowed; }
@@ -135,6 +139,21 @@ svg text { font-family: var(--display); font-weight: 800; }
 .own .err { color: var(--bad); font-weight: 700; flex-basis: 100%; margin: 0; min-height: 1.2em; }
 details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
 
+/* iPad portrait: board on top, panel as a short strip beneath it with the ten-frames on the right */
+@media (orientation: portrait) and (min-width: 600px) {
+  .main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+  .panel { grid-template-columns: minmax(0, 1fr) auto; column-gap: 20px; max-height: 36vh; }
+  .panel > * { grid-column: 1; }
+  .panel .frames { grid-column: 2; grid-row: 1 / span 5; flex-direction: column; }
+}
+/* phones and very short screens: let the page scroll instead of squeezing the board */
+@media (max-width: 599px), (max-height: 520px) {
+  .wrap { height: auto; min-height: 100%; }
+  .main { grid-template-columns: minmax(0, 1fr); }
+  .board svg { height: auto; }
+  .panel { overflow: visible; }
+}
+@media (max-width: 599px) { .coins { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 .done-card { display: none; }
 .done .done-card { display: block; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
@@ -166,23 +185,22 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
       <div class="frames" id="frames" aria-hidden="true"></div>
       <div class="legend" id="legend"></div>
       <button class="btn done-card" id="nextBtn">Next sum →</button>
+      <details>
+        <summary>Make my own sum</summary>
+        <form class="own" id="ownForm" style="margin-top:10px">
+          <label for="ownA">Top</label><input id="ownA" inputmode="numeric" maxlength="3" value="49">
+          <label for="ownB" id="ownOp">+</label><input id="ownB" inputmode="numeric" maxlength="3" value="32">
+          <button class="btn ghost" type="submit">Use these</button>
+          <p class="err" id="ownErr"></p>
+        </form>
+      </details>
     </aside>
   </div>
 
   <section class="tray" id="tray">
-    <p>Drag a coin into the glowing circle, or tap a coin.</p>
+    <p>Drag a coin onto a glowing circle, or tap a coin.</p>
     <div class="coins" id="coins"></div>
   </section>
-
-  <details>
-    <summary>Make my own sum</summary>
-    <form class="own" id="ownForm" style="margin-top:10px">
-      <label for="ownA">Top</label><input id="ownA" inputmode="numeric" maxlength="3" value="49">
-      <label for="ownB" id="ownOp">+</label><input id="ownB" inputmode="numeric" maxlength="3" value="32">
-      <button class="btn ghost" type="submit">Use these</button>
-      <p class="err" id="ownErr"></p>
-    </form>
-  </details>
 </div>
 
 <script>
@@ -201,6 +219,8 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
   const SYM = { add: '+', sub: '−' };
   const digit = (arr, i) => arr[i] == null ? 0 : arr[i];
   const colSum = i => digit(st.A, i) + digit(st.B, i) + st.carry[i];
+  // addition: column i makes a ten that has to be carried
+  const needTen = i => st.op === 'add' && i > 0 && colSum(i) >= 10;
   // column i's answer digit
   const want = i => st.op === 'add' ? colSum(i) % 10 : st.cur[i] - digit(st.B, i);
   // addition: the ten travels up from the answer row into the next column left.
@@ -245,7 +265,7 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
     const A = toDigits(a, n);
     return { op, n, a, b, A, B: toDigits(b, n), cur: A.map(d => d ?? 0), borrowed: Array(n).fill(false),
       carry: Array(n).fill(0), ans: Array(n).fill(null),
-      col: n - 1, phase: 'answer', tries: 0, slideT: 0, slideJ: -1, done: false, fresh: -1 };
+      tenIn: false, col: n - 1, phase: 'answer', tries: 0, slideT: 0, slideJ: -1, done: false, fresh: -1 };
   }
 
   function el(tag, attrs = {}, parent) {
@@ -294,9 +314,10 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
 
     if (!st.done) el('rect', { class: 'col-hi', x: cx(st.col) - CW / 2 + 8, y: 10, width: CW - 16, height: H - 20, rx: 18 }, svg);
 
+    const tenSpot = st.phase === 'answer' && !st.done && needTen(st.col);
     // grooves cut into the board, one between each pair of columns
     for (let j = 0; j < n - 1; j++) {
-      const active = (st.phase === 'slide' || st.phase === 'drop') && st.slideJ === j;
+      const active = (st.phase === 'slide' && st.slideJ === j) || (tenSpot && j === st.col - 1);
       const used = sub ? st.borrowed[j + 1] : st.carry[j];
       const g = el('g', { class: 'groove-wrap' + (active || used ? '' : ' idle') }, svg);
       const d = pathD(groovePts(j));
@@ -324,13 +345,14 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
         }
       });
       if (st.carry[i]) coin(svg, x, Y.carry, '1', st.fresh === i ? 'pop' : '');
-      el('circle', { class: 'slot' + (i === st.col && st.phase === 'answer' && !st.done ? ' active' : ''), cx: x, cy: Y.ans, r: 40, 'data-slot': i }, svg);
+      el('circle', { class: 'slot' + (i === st.col && st.phase === 'answer' && st.ans[i] == null && !st.done ? ' active' : ''), cx: x, cy: Y.ans, r: 40, 'data-target': 'ans' }, svg);
       if (st.ans[i] != null) coin(svg, x, Y.ans, st.ans[i], 'big' + (st.fresh === 'a' + i ? ' pop' : ''));
     }
 
-    if (st.phase === 'drop') { // empty spot next to the ones where the carried ten waits
-      const [x, y] = groovePts(st.slideJ)[0];
-      el('circle', { class: 'slot active', cx: x, cy: y, r: 34 }, svg);
+    if (tenSpot) { // spot next to the ones where the carried ten waits
+      const [x, y] = groovePts(st.col - 1)[0];
+      el('circle', { class: 'slot' + (st.tenIn ? '' : ' active'), cx: x, cy: y, r: 34, 'data-target': 'ten' }, svg);
+      if (st.tenIn) coin(svg, x, y, '1', st.fresh === 'c' ? 'pop' : '');
     }
     if (st.phase === 'slide') {
       const pts = groovePts(st.slideJ), [x, y] = pointAt(pts, st.slideT);
@@ -364,7 +386,7 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
   function renderPanel() {
     const panel = $('panel'), tray = $('tray'), sub = st.op === 'sub';
     panel.classList.toggle('done', st.done);
-    tray.classList.toggle('locked', !(st.phase === 'answer' || st.phase === 'drop') || st.done);
+    tray.classList.toggle('locked', st.phase !== 'answer' || st.done);
     document.querySelectorAll('.coin-btn').forEach(b => b.classList.remove('hint'));
     const frames = $('frames'); frames.innerHTML = '';
     $('legend').innerHTML = '';
@@ -375,7 +397,7 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
     }
     const i = st.col, p = place(i);
     $('step').textContent = (sub ? 'Take away the ' : 'Add the ') + p;
-    const known = st.op === 'add' ? (st.phase !== 'answer' || st.ans[i] != null) : st.ans[i] != null;
+    const known = st.op === 'add' ? (st.phase !== 'answer' || st.ans[i] != null || st.tenIn) : st.ans[i] != null;
     $('say').innerHTML = terms(i).join(` ${SYM[st.op]} `) + (known ? ` = ${st.op === 'add' ? colSum(i) : want(i)}` : ' = ?');
 
     // ten-frames. add: carried ten, top, bottom. sub: borrowed ten + top, with the bottom amount crossed out
@@ -390,7 +412,7 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
       if (st.carry[i]) dots.push('k');
       for (let k = 0; k < digit(st.A, i); k++) dots.push('a');
       for (let k = 0; k < digit(st.B, i); k++) dots.push('b');
-      if (st.phase !== 'answer' || st.tries >= 1) tag = '1 ten';
+      if (st.phase !== 'answer' || st.tries >= 1 || st.tenIn) tag = '1 ten';
     }
     const nf = Math.max(1, Math.ceil(dots.length / 10));
     for (let f = 0; f < nf; f++) {
@@ -438,9 +460,13 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
     render();
     if (k != null) return say(borrowMsg(k));
     const p = place(st.col);
-    say(st.op === 'sub'
-      ? `Take away the ${p}. Put the answer coin in the ${p} circle.`
-      : `Count the ${p}. Put the answer coin in the ${p} circle.`);
+    say(st.op === 'sub' ? `Take away the ${p}. Put the answer coin in the ${p} circle.` : addHint(st.col));
+  }
+  function addHint(i) {
+    const p = place(i);
+    return needTen(i)
+      ? `Count the ${p}. 10 or more? Put the 1 ${ONE[place(i - 1)]} in the spot next to the ${p} first, then the ${p} in the circle.`
+      : `Count the ${p}. Put the answer coin in the ${p} circle.`;
   }
 
   function newGame(p) {
@@ -449,10 +475,13 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
   }
 
   // ----- dropping an answer coin -----
-  function placeAnswer(d) {
-    if (st.phase === 'drop') return placeCarry(d);
+  // target: 'ans' (answer circle) or 'ten' (carry spot). A tap with no target fills the ten spot first.
+  function placeAnswer(d, target) {
     if (st.phase !== 'answer' || st.done) return;
     const i = st.col, p = place(i), w = want(i), sub = st.op === 'sub', s = colSum(i);
+    if (!target) target = needTen(i) && !st.tenIn && (d === 1 || st.ans[i] != null) ? 'ten' : 'ans';
+    if (target === 'ten') return placeTen(d);
+    if (st.ans[i] != null) return;
     if (d !== w) {
       st.tries++;
       render();
@@ -467,33 +496,43 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
       return;
     }
     st.ans[i] = d; st.tries = 0; st.fresh = 'a' + i;
-    if (!sub && s >= 10 && i > 0) {
-      st.phase = 'drop'; st.slideJ = i - 1; st.slideT = 0;
+    if (needTen(i)) {
+      if (st.tenIn) return readyToSlide();
       render();
-      say(`${s} ${p} = 1 ${ONE[place(i - 1)]} and ${w} ${p}. Now drag the ${ONE[place(i - 1)]} coin into the glowing spot next to the ${p}.`, 'good');
+      say(`Yes, ${w} ${p}! Now drag the 1 ${ONE[place(i - 1)]} into the glowing spot next to the ${p}.`, 'good');
     } else if (i > 0) {
       st.col--;
       const k = needBorrow();
       render();
       if (k != null) say(`Yes, ${w} ${p}! ` + borrowMsg(k), 'good');
-      else say(`Yes! ${w} ${p}. ${sub ? 'No borrowing here.' : 'No carrying here.'} Now the ${place(st.col)}.`, 'good');
+      else say(`Yes! ${w} ${p}. ${sub ? 'No borrowing here.' : 'No carrying here.'} ` + (sub ? `Now the ${place(st.col)}.` : addHint(st.col)), 'good');
     } else finish();
   }
 
-  // addition: the child puts the carried ten into the groove; it waits there until they slide it
-  function placeCarry(d) {
-    const j = st.slideJ, i = j + 1, [x, y] = groovePts(j)[0];
+  // addition: the carried ten goes in the spot next to the column; it waits there until the child slides it
+  function placeTen(d) {
+    const i = st.col, j = i - 1, [x, y] = groovePts(j)[0];
     if (d !== 1) {
       st.tries++;
+      render();
       const bad = coin(svg, x, y, d, 'shake');
       setTimeout(() => bad.remove(), 460);
-      say(`${colSum(i)} is 1 ${ONE[place(j)]} and ${colSum(i) % 10} ${place(i)}. How many ${place(j)} is that?`, 'bad');
+      say(st.tries >= 2
+        ? `${strip(i)} = ${colSum(i)}. That's 1 ${ONE[place(j)]} and ${want(i)} ${place(i)}. Put the 1 here.`
+        : `Not quite. This spot is for the ${place(j)}. How many full ten-frames are there?`, 'bad');
       if (st.tries >= 2) document.querySelector('.coin-btn[data-d="1"]')?.classList.add('hint');
       return;
     }
-    st.phase = 'slide'; st.slideT = 0; st.tries = 0; st.fresh = 'c';
+    st.tenIn = true; st.tries = 0; st.fresh = 'c';
+    if (st.ans[i] != null) return readyToSlide();
     render();
-    say(`The ${ONE[place(j)]} is waiting next to the ${place(i)}. When you're ready, slide it up the groove to the ${place(j)}.`, 'good');
+    say(`1 ${ONE[place(j)]} is ready. How many ${place(i)} are left over? Put them in the ${place(i)} circle.`, 'good');
+  }
+  function readyToSlide() {
+    const i = st.col, j = i - 1;
+    st.phase = 'slide'; st.slideJ = j; st.slideT = 0; st.tenIn = false;
+    render();
+    say(`${colSum(i)} ${place(i)} = 1 ${ONE[place(j)]} and ${want(i)} ${place(i)}. When you're ready, slide the 1 up the groove to the ${place(j)}.`, 'good');
   }
 
   function finish() {
@@ -551,7 +590,7 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
     if (st.op === 'add') {
       st.carry[j] = 1; st.fresh = j; st.phase = 'answer'; st.col = j;
       render();
-      return say(`The ten is in the ${place(j)} column. Now add the ${place(j)}, and don't forget the 1!`, 'good');
+      return say(`The ${ONE[place(j)]} is in the ${place(j)} column. Don't forget to count the 1! ` + addHint(j), 'good');
     }
     st.cur[j] -= 1; st.cur[j + 1] += 10; st.borrowed[j + 1] = true; st.fresh = 't' + (j + 1);
     const lender = place(j), got = place(j + 1);
@@ -571,14 +610,17 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
     b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); placeAnswer(d); } });
     coinsEl.appendChild(b);
   }
-  function activeSlot() { return svg.querySelector('.slot.active'); }
-  function overSlot(x, y) {
-    const s = activeSlot(); if (!s) return false;
-    const r = s.getBoundingClientRect(), c = [r.left + r.width / 2, r.top + r.height / 2];
-    return Math.hypot(x - c[0], y - c[1]) < r.width * 0.85;
+  // the glowing slot nearest the finger, if it's close enough
+  function slotAt(x, y) {
+    let best = null, bd = Infinity;
+    for (const s of svg.querySelectorAll('.slot.active')) {
+      const r = s.getBoundingClientRect(), d = Math.hypot(x - r.left - r.width / 2, y - r.top - r.height / 2);
+      if (d < r.width * 0.8 && d < bd) { best = s; bd = d; }
+    }
+    return best;
   }
   function trayDown(e) {
-    if (!(st.phase === 'answer' || st.phase === 'drop') || st.done) return;
+    if (st.phase !== 'answer' || st.done) return;
     e.preventDefault();
     const b = e.currentTarget, d = +b.dataset.d, sx = e.clientX, sy = e.clientY;
     b.setPointerCapture(e.pointerId);
@@ -589,15 +631,17 @@ details summary { cursor: pointer; font-weight: 800; color: var(--muted); }
       }
       if (ghost) {
         ghost.style.transform = `translate(${ev.clientX}px, ${ev.clientY}px)`;
-        activeSlot()?.classList.toggle('over', overSlot(ev.clientX, ev.clientY));
+        const hit = slotAt(ev.clientX, ev.clientY);
+        svg.querySelectorAll('.slot.active').forEach(s => s.classList.toggle('over', s === hit));
       }
     };
     const up = ev => {
       b.removeEventListener('pointermove', move); b.removeEventListener('pointerup', up); b.removeEventListener('pointercancel', up);
-      activeSlot()?.classList.remove('over');
+      svg.querySelectorAll('.slot.over').forEach(s => s.classList.remove('over'));
       if (!ghost) return placeAnswer(d); // a tap
       ghost.remove();
-      if (ev.type === 'pointerup' && overSlot(ev.clientX, ev.clientY)) placeAnswer(d);
+      const hit = ev.type === 'pointerup' && slotAt(ev.clientX, ev.clientY);
+      if (hit) placeAnswer(d, hit.dataset.target);
     };
     b.addEventListener('pointermove', move); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up);
   }
